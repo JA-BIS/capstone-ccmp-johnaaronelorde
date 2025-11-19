@@ -62,11 +62,5 @@
 | Step Functions ARN   | `arn:aws:states:us-east-2:214181534712:stateMachine:Capstone-ImageProcessing-Workflow` |
 | API Gateway Endpoint | `https://your-api-id.execute-api.us-east-2.amazonaws.com/prod/start-resize` |
 
----
-
-## Demo  
-*(Add a link or embed a video demonstrating end-to-end image resize pipeline)*
-
----
 
 This README provides a comprehensive guide for setup, deployment, and testing of your serverless image processing pipeline using your actual resource names and ARNs.
