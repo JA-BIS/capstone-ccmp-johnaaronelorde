@@ -46,4 +46,27 @@
 ### Step 5: Test Your Application
 
 1. Upload a test image (e.g., `sample-image.jpg`) to `capstone-original-imgs` bucket.  
-2. Use Postman or curl to send a POST request to your API Gateway endpoint:  
+2. Use Postman or curl to send a POST request to your API Gateway endpoint:
+3. Verify the resized image appears in the `capstone-resized-img` bucket.  
+4. Monitor Step Functions executions and Lambda logs for detailed status.
+
+---
+
+## Important Resources
+
+| Resource             | Value                                                    |
+|----------------------|----------------------------------------------------------|
+| Lambda Function      | `Capstone-imageResizer-Elorde`                           |
+| Source Bucket        | `capstone-original-imgs`                                 |
+| Destination Bucket   | `capstone-resized-img`                                   |
+| Step Functions ARN   | `arn:aws:states:us-east-2:214181534712:stateMachine:Capstone-ImageProcessing-Workflow` |
+| API Gateway Endpoint | `https://your-api-id.execute-api.us-east-2.amazonaws.com/prod/start-resize` |
+
+---
+
+## Demo  
+*(Add a link or embed a video demonstrating end-to-end image resize pipeline)*
+
+---
+
+This README provides a comprehensive guide for setup, deployment, and testing of your serverless image processing pipeline using your actual resource names and ARNs.
