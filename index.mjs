@@ -1,62 +1,61 @@
-import {
-  S3Client,
-  GetObjectCommand,
-  PutObjectCommand,
-} from "@aws-sdk/client-s3";
+import { S3Client, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import sharp from "sharp";
 
-const S3 = new S3Client();
-const DEST_BUCKET = process.env.DEST_BUCKET;
-const THUMBNAIL_WIDTH = 200; // px
 const SUPPORTED_FORMATS = {
   jpg: true,
   jpeg: true,
   png: true,
 };
 
-export const handler = async (event, context) => {
-  const { eventTime, s3 } = event.Records[0];
-  const srcBucket = s3.bucket.name;
+const S3 = new S3Client();
+const THUMBNAIL_WIDTH = 200; // pixels
 
-  // Object key may have spaces or unicode non-ASCII characters
-  const srcKey = decodeURIComponent(s3.object.key.replace(/\+/g, " "));
-  const ext = srcKey.replace(/^.*\./, "").toLowerCase();
+export const handler = async (event) => {
+  const srcBucket = event.srcBucket;
+  const srcKey = event.srcKey;
+  const destBucket = event.destBucket || process.env.DEST_BUCKET;
 
-  console.log(`${eventTime} - ${srcBucket}/${srcKey}`);
-
-  if (!SUPPORTED_FORMATS[ext]) {
-    console.log(`ERROR: Unsupported file type (${ext})`);
-    return;
+  if (!srcBucket || !srcKey || !destBucket) {
+    const errorMsg = "Missing required parameters: srcBucket, srcKey, or destBucket.";
+    console.log(errorMsg);
+    return { statusCode: 400, body: errorMsg };
   }
 
-  // Get the image from the source bucket
+  const ext = srcKey.replace(/^.*\./, "").toLowerCase();
+  const eventTime = new Date().toISOString();
+  console.log(`${eventTime} - Processing ${srcBucket}/${srcKey}`);
+
+  if (!SUPPORTED_FORMATS[ext]) {
+    const error = `ERROR: Unsupported file type (${ext})`;
+    console.log(error);
+    return { statusCode: 400, body: error };
+  }
+
   try {
     const { Body, ContentType } = await S3.send(
-      new GetObjectCommand({
-        Bucket: srcBucket,
-        Key: srcKey,
-      })
+      new GetObjectCommand({ Bucket: srcBucket, Key: srcKey })
     );
-    const image = await Body.transformToByteArray();
-    // resize image
-    const outputBuffer = await sharp(image).resize(THUMBNAIL_WIDTH).toBuffer();
 
-    // store new image in the destination bucket
+    const image = await Body.transformToByteArray();
+
+    const outputBuffer = await sharp(image)
+      .resize(THUMBNAIL_WIDTH)
+      .toBuffer();
+
     await S3.send(
       new PutObjectCommand({
-        Bucket: DEST_BUCKET,
+        Bucket: destBucket,
         Key: srcKey,
         Body: outputBuffer,
         ContentType,
       })
     );
-    const message = `Successfully resized ${srcBucket}/${srcKey} and uploaded to ${DEST_BUCKET}/${srcKey}`;
+
+    const message = `Successfully resized ${srcBucket}/${srcKey} and uploaded to ${destBucket}/${srcKey}`;
     console.log(message);
-    return {
-      statusCode: 200,
-      body: message,
-    };
+    return { statusCode: 200, body: message };
   } catch (error) {
-    console.log(error);
+    console.error("Error processing image:", error);
+    return { statusCode: 500, body: error.message || "Error processing image." };
   }
 };
